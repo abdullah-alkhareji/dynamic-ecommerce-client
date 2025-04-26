@@ -217,10 +217,10 @@ const renderComponent = (component: DynamicComponent) => {
 
 export default function DynamicRenderer({ components }: DynamicRendererProps) {
   return (
-    <Container>
+    <>
       {components.map((component, idx) => (
         <div key={idx}>{renderComponent(component)}</div>
       ))}
-    </Container>
+    </>
   );
 }

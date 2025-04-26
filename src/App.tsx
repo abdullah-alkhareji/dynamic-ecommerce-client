@@ -1,48 +1,57 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ProductList from "./pages/ProductList";
-import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import AdminProducts from "./pages/AdminProducts";
-import AdminUsers from "./pages/AdminUsers";
-import { Toaster } from "react-hot-toast";
+import axios from "axios";
+
 import DynamicProductsPage from "./pages/DynamicProductsPage";
 import DynamicCartPage from "./pages/DynamicCartPage";
 import DynamicProductDetailsPage from "./pages/DynamicProductDetailsPage";
 import DynamicAdminProductsPage from "./pages/DynamicAdminProductsPage";
 import DynamicAdminUsersPage from "./pages/DynamicAdminUsersPage";
-import DynamicHeaderLoader from "./components/layout/DynamicHeaderLoader";
-import DynamicAdminLayout from "./components/admin/DynamicAdminLayout";
 
-function App() {
+import DynamicHeaderLoader from "./components/layout/DynamicHeaderLoader";
+import Container from "./components/layout/Container";
+
+const pageComponentMap: any = {
+  DynamicProductsPage,
+  DynamicCartPage,
+  DynamicProductDetailsPage,
+  DynamicAdminProductsPage,
+  DynamicAdminUsersPage,
+};
+
+type RouteDefinition = {
+  path: string;
+  page: string;
+};
+
+export default function App() {
+  const [routes, setRoutes] = useState<RouteDefinition[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5053/api/PageRenderer/routes")
+      .then((res) => setRoutes(res.data))
+      .catch((err) => console.error("Failed to load routes", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="text-center py-10">Loading app...</p>;
+
   return (
     <Router>
       <DynamicHeaderLoader />
-      <Toaster position="top-right" reverseOrder={false} />
-      <Routes>
-        <Route path="/" element={<ProductList />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/admin/products" element={<AdminProducts />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/dynamic-products" element={<DynamicProductsPage />} />
-        <Route path="/dynamic-cart" element={<DynamicCartPage />} />
-        <Route
-          path="/dynamic-product/:id"
-          element={<DynamicProductDetailsPage />}
-        />
-        <Route path="/admin" element={<DynamicAdminLayout />}>
-          <Route
-            path="/admin/dynamic-products"
-            element={<DynamicAdminProductsPage />}
-          />
-          <Route
-            path="/admin/dynamic-users"
-            element={<DynamicAdminUsersPage />}
-          />
-        </Route>
-      </Routes>
+      <Container>
+        <Routes>
+          {routes.map((route, idx) => {
+            const Component = pageComponentMap[route.page];
+            if (!Component) return null;
+            return (
+              <Route key={idx} path={route.path} element={<Component />} />
+            );
+          })}
+        </Routes>
+      </Container>
     </Router>
   );
 }
-
-export default App;
